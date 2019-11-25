@@ -1,5 +1,11 @@
 scalars = {}
 
+function load_story_page(page)
+	engine.SSP(page)
+	current_page = page
+	return ""
+end
+
 function printR(a)
 	print(a)
 	return a
@@ -22,6 +28,11 @@ function get_scalar(key, default)
 		scalars[key] = default
 	end
 	return scalars[key]
+end
+
+function set_scalar(key, val)
+	scalars[key] = val
+	return ""
 end
 
 function new_table()
