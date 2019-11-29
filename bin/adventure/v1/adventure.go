@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"adventure/engine"
+	"adventure/engine/v1"
 )
 
 func main() {
