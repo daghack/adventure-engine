@@ -7,7 +7,7 @@ config = {
 story = {
 	"Story section part one.",
 	"Story section part two.",
-	"Story section part three.$[ string.reverse(\"Hello.\") ]"
+	"Story section part three.$[ return_str(\"Hello.\") ]"
 }
 
 actions = {

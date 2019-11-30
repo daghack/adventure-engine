@@ -55,25 +55,48 @@ local actions = {
 }
 `
 
-func StartEngine(configFile, storyName string) (*Engine, error) {
-	return &Engine{
-		state: luar.Init(),
-		pages: map[string]*StoryPage{},
-	}, nil
+func StartEngine(configFile, storydir string) (*Engine, error) {
+	story := filepath.Base(storydir)
+	eng := &Engine{
+		state:       luar.Init(),
+		pages:       map[string]*StoryPage{},
+		currentPage: story,
+	}
+	baseLua := filepath.Join(storydir, "base.lua")
+	err := eng.state.DoFile(baseLua)
+	if err != nil {
+		return nil, err
+	}
+	return eng, nil
 }
 
 func runReturnLuaString(state *lua.State, str string) (string, error) {
 	t := state.GetTop()
 	err := state.DoString("return " + str)
+	t_p := state.GetTop()
+	defer state.Pop(t_p - t)
 	if err != nil {
 		return "", err
 	}
-	t_p := state.GetTop()
 	if t == t_p {
 		return "", nil
 	}
 	toret := state.ToString(-1)
-	state.Pop(t_p - t)
+	return toret, nil
+}
+
+func runReturnLuaBool(state *lua.State, str string) (bool, error) {
+	t := state.GetTop()
+	err := state.DoString("return " + str)
+	t_p := state.GetTop()
+	defer state.Pop(t_p - t)
+	if err != nil {
+		return false, err
+	}
+	if t == t_p {
+		return false, nil
+	}
+	toret := state.ToBoolean(-1)
 	return toret, nil
 }
 
@@ -84,11 +107,7 @@ type Engine struct {
 }
 
 func (eng *Engine) LoadStoryPage(page, storydir string) error {
-	baseLua := filepath.Join(storydir, "base.lua")
-	err := eng.state.DoFile(baseLua)
-	if err != nil {
-		return err
-	}
+	eng.currentPage = page
 	pagefile := filepath.Join(storydir, page+".page")
 	res := eng.state.LoadFile(pagefile)
 	if res != 0 {
@@ -100,7 +119,7 @@ func (eng *Engine) LoadStoryPage(page, storydir string) error {
 	eng.state.SetGlobal(page)
 	eng.state.GetGlobal(page)
 	eng.state.SetfEnv(-2)
-	err = eng.state.Call(0, 0)
+	err := eng.state.Call(0, 0)
 	if err != nil {
 		return err
 	}
@@ -153,6 +172,7 @@ func (eng *Engine) buildActions(actions interface{}) *ActionSet {
 		Actions: map[string]*Action{},
 	}
 	for actionName, actionInterface := range actionsInterface {
+		fmt.Println("Added Action:", actionName)
 		action := actionInterface.(map[string]interface{})
 		text := action["text"].(string)
 		toret.Actions[actionName] = &Action{
@@ -187,6 +207,37 @@ func (eng *Engine) buildConfig(config interface{}) *PageConfig {
 		TransitionType: transition,
 		TransitionTime: time.Duration(transition_time_float) * time.Millisecond,
 	}
+}
+
+func (eng *Engine) RunAction(action_str string) error {
+	fmt.Printf("%+v\n", eng.pages)
+	action, ok := eng.pages[eng.currentPage].Actions.Actions[action_str]
+	if !ok {
+		fmt.Errorf("No such action.")
+	}
+	if action.Cond != nil {
+		condMet, err := runReturnLuaBool(eng.state, *action.Cond)
+		if err != nil {
+			return err
+		}
+		if !condMet {
+			return fmt.Errorf("Condition not met [%s]", *action.Cond)
+		}
+	}
+	if action.Execute != nil {
+		err := eng.state.DoString(*action.Execute)
+		if err != nil {
+			return err
+		}
+	}
+	if action.TransitionTo != nil {
+		if _, ok := eng.pages[*action.TransitionTo]; ok {
+			eng.currentPage = *action.TransitionTo
+		} else {
+			return fmt.Errorf("No such page [%s]", *action.TransitionTo)
+		}
+	}
+	return nil
 }
 
 type StoryPage struct {
