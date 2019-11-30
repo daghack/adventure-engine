@@ -1,8 +1,31 @@
 config = {
+	time_on_screen_ms = 2000,
+	transition = "fade",
+	transition_time_ms = 500
 }
 
 story = {
+	"Story section part one.",
+	"Story section part two.",
+	"Story section part three.$[ string.reverse(\"Hello.\") ]"
 }
 
 actions = {
+	reload = {
+		text = "Reload this same story page."
+	},
+	hold_hand = {
+		text = "Continue holding on to $[ name_of_stranger ]'s hand.",
+		transition_to = "first"
+	},
+	let_go = {
+		text = "Let go of $[ name_of_stranger ]'s hand.",
+		execute = "into_the_darkness = true",
+		transition_to = "second"
+	},
+	light_candle = {
+		cond = "inventory.candle",
+		text = "Lift your candle into the darkness.",
+		transition_to = "third"
+	}
 }

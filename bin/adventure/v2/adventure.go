@@ -10,4 +10,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = eng.RunPage("first")
+	if err != nil {
+		panic(err)
+	}
 }
