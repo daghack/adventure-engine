@@ -7,23 +7,23 @@ config = {
 story = {
 	"Story section part one.",
 	"Story section part two.",
-	"Story section part three.$[ return_str(\"Hello.\") ]"
+	"Story section part three.$[ engine.if_else(true, 1, 2) ]"
 }
 
 actions = {
-	reload = {
+	act00_reload = {
 		text = "Reload this same story page."
 	},
-	hold_hand = {
-		text = "Continue holding on to $[ name_of_stranger ]'s hand.",
+	act01_hold_hand = {
+		text = "Continue holding on to $[ \":D\"]'s hand.",
 		transition_to = "first"
 	},
-	let_go = {
-		text = "Let go of $[ name_of_stranger ]'s hand.",
+	act02_let_go = {
+		text = "Let go of $[ \":D\" ]'s hand.",
 		execute = "into_the_darkness = true",
 		transition_to = "second"
 	},
-	light_candle = {
+	act03_light_candle = {
 		cond = "inventory.candle",
 		text = "Lift your candle into the darkness.",
 		transition_to = "third"
